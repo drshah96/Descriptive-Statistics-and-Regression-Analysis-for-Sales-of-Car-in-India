@@ -51,6 +51,11 @@ Statistics_Description <- as.data.frame(Statistics_Description)
 names(Statistics_Description) <- c("Efficiency","Power","Engine","Price(USD)")
 stat.desc(Statistics_Description, basic = F, p = 0.95)
 
+Statistics_Description_1 <- as.data.frame(describe(Statistics_Description,skew = T))
+row.names(Statistics_Description_1) <- c("Efficiency","Power","Engine","Price(USD)")
+Statistics_Description_1
+summary(Statistics_Description)
+
 #Efficiency of Fuel according to Location and Fuel Type
 Efficiency_Location_FuelType <- Data_raw %>%
     group_by(Location, `Fuel Type`) %>%
@@ -102,8 +107,8 @@ options(digits = 2)
 Statistics_Description_Sample <- as.data.frame(Statistics_Description_Sample)
 names(Statistics_Description_Sample) <- c("Efficiency","Power","Engine","Price(USD)")
 stat.desc(Statistics_Description_Sample, basic = F, p = 0.95)
-Statistics_Description_Sample_1 <- as.data.frame(describe(Statistics_Description,skew = T))
-names(Statistics_Description_Sample_1) <- row.names(c("Efficiency","Power","Engine","Price(USD)"))
+
+Statistics_Description_Sample_1 <- as.data.frame(describe(Statistics_Description_Sample,skew = T))
 row.names(Statistics_Description_Sample_1) <- c("Efficiency","Power","Engine","Price(USD)")
 Statistics_Description_Sample_1
 summary(Statistics_Description_Sample)
