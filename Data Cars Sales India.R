@@ -53,7 +53,7 @@ stat.desc(Statistics_Description, basic = F, p = 0.95)
 
 Statistics_Description_1 <- as.data.frame(describe(Statistics_Description,skew = T))
 row.names(Statistics_Description_1) <- c("Efficiency","Power","Engine","Price(USD)")
-Statistics_Description_1
+(Statistics_Description_1 <- data.frame(t(Statistics_Description_1)))
 summary(Statistics_Description)
 
 #Efficiency of Fuel according to Location and Fuel Type
@@ -110,7 +110,9 @@ stat.desc(Statistics_Description_Sample, basic = F, p = 0.95)
 
 Statistics_Description_Sample_1 <- as.data.frame(describe(Statistics_Description_Sample,skew = T))
 row.names(Statistics_Description_Sample_1) <- c("Efficiency","Power","Engine","Price(USD)")
+(Statistics_Description_Sample_1 <- data.frame(t(Statistics_Description_Sample_1)))
 Statistics_Description_Sample_1
+
 summary(Statistics_Description_Sample)
 
 #Efficiency of Fuel according to Location and Fuel Type
@@ -148,9 +150,85 @@ Efficiency_Seats_FuelType_Transmission_Sample <- Data_Sample %>%
 Efficiency_Seats_FuelType_Transmission_Sample <- na.omit(Efficiency_Seats_FuelType_Transmission_Sample)
 Efficiency_Seats_FuelType_Transmission_Sample
 
+# Price of Car according to OwnerType, Transmission
+Price_OwnerType_Transmission_Sample <- Data_Sample %>%
+    group_by(`Owner Type`,Transmission) %>%
+    summarize(Price = mean(`In US Dollars (71.23 INR per USD)`))
+Price_OwnerType_Transmission_Sample
+
+# Price of Car according to OwnerType, Transmission and Fuel
+Price_OwnerType_Transmission_Fuel_Sample <- Data_Sample %>%
+    group_by(`Owner Type`,`Fuel Type`,Transmission) %>%
+    summarize(Price = mean(`In US Dollars (71.23 INR per USD)`))
+
+shapiro.test(Price_OwnerType_Transmission_Fuel_Sample$Price)
+Price_OwnerType_Transmission_Fuel_Sample$Parameter <- paste0(Price_OwnerType_Transmission_Fuel_Sample$`Owner Type`," ",
+                                                             Price_OwnerType_Transmission_Fuel_Sample$`Fuel Type`," ",
+                                                             Price_OwnerType_Transmission_Fuel_Sample$Transmission)
+Price_OwnerType_Transmission_Fuel_Sample
+
+#Efficiency of Fuel according to Owner Type,Fuel Type and Transmission
+Efficiency_OwnerType_Transmission_Fuel_Sample <- Data_Sample %>%
+    group_by(`Owner Type`,`Fuel Type`,Transmission) %>%
+    summarize(Efficiency = mean(as.numeric(substr(Efficiency,start = 1, stop = 4))))
+
+shapiro.test(Efficiency_OwnerType_Transmission_Fuel_Sample$Efficiency)
+
+Efficiency_OwnerType_Transmission_Fuel_Sample$Parameter <- paste(Efficiency_OwnerType_Transmission_Fuel_Sample$`Owner Type`," ",
+                                                                  Efficiency_OwnerType_Transmission_Fuel_Sample$`Fuel Type`," ",
+                                                                  Efficiency_OwnerType_Transmission_Fuel_Sample$Transmission)
+Efficiency_OwnerType_Transmission_Fuel_Sample
+
+df <- Data_Sample %>%
+    group_by(`Owner Type`,`Fuel Type`,Transmission) %>%
+    summarize(Efficiency = (mean(as.numeric(substr(Efficiency,start = 1,stop = 4)))))
+df
+Scatterplot_Efficiency_Price <- data.frame(Price_OwnerType_Transmission_Fuel_Sample$Parameter,
+                                           round(df$Efficiency,2),
+                                           round(Price_OwnerType_Transmission_Fuel_Sample$Price),2)
+names(Scatterplot_Efficiency_Price) <- c("Parameters","Efficiency","Price")
+Scatterplot_Efficiency_Price$Efficiency <- round(Scatterplot_Efficiency_Price$Efficiency,2)
+Scatterplot_Efficiency_Price$Price <- round(Scatterplot_Efficiency_Price$Price,2)
+class(Scatterplot_Efficiency_Price$Price)
+
+#Correlation Graph 1
+library("ggpubr")
+ggscatter(Scatterplot_Efficiency_Price, 
+          x = "Efficiency",
+          y = "Price",
+          add = "reg.line", conf.int = TRUE, 
+          #color = "cyl", palette = c("#00AFBB", "#E7B800", "#FC4E07"),
+          add.params = list(color = "blue", fill = "lightgray"),
+          cor.coef = TRUE, cor.method = "pearson",
+          cor.coeff.args = list(method = "pearson", label.sep = "\n"),
+          #add = "loess",
+          ellipse = TRUE, mean.point = TRUE,
+          show.legend.text = TRUE,
+          star.plot = TRUE, 
+          #panel.labs = Scatterplot_Efficiency_Price$Parameters,
+          title = "Correlation between Price and Efficiency of Car based on OwnerType, FuelType and Transmission",
+          #ggtheme = theme_bw(),
+          xlab = "Efficiency", ylab = "Price(USD)", repel = TRUE) 
+
+# Correalation Graph 2
+ggplot(Scatterplot_Efficiency_Price, aes(x=Scatterplot_Efficiency_Price$Efficiency,
+                                         y=Scatterplot_Efficiency_Price$Price)) + 
+    geom_point() + 
+    #geom_text(label=Scatterplot_Efficiency_Price$Parameters, 
+    #          hjust=1.5, vjust = 0,
+    #          check_overlap = TRUE) + 
+    ggtitle("International vs Domestic States MigrationRate") +
+    xlab("International Migration Rate") + ylab("Domestic Migration Rate") +
+    geom_smooth(method=lm)
 
 
-### Shiny ###
-install.packages("shiny")
-library(shiny)
 
+##### Formatting Tables #####
+install.packages("formattable")
+library(knitr)
+library(formattable)
+
+df <- formattable(Price_OwnerType_Transmission_Sample, list(
+    price = formatter("span", 
+                          style = ~ style(color = ifelse(Transmission = 'Automatic', "green", "red")))))
+df
